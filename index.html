@@ -5,19 +5,17 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>📚 辅导班上课记录</title>
 <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/pako@2.1.0/dist/pako.min.js"></script>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
-:root{--bg:#f0f4ff;--card:#fff;--accent:#4f6ef7;--accent2:#22c55e;--accent3:#f59e0b;--red:#ef4444;--text:#1e293b;--sub:#64748b;--border:#e2e8f0;--shadow:0 2px 12px rgba(0,0,0,.06)}
+:root{--bg:#f0f4ff;--card:#fff;--accent:#4f6ef7;--accent2:#22c55e;--red:#ef4444;--text:#1e293b;--sub:#64748b;--border:#e2e8f0;--shadow:0 2px 12px rgba(0,0,0,.06)}
 body{font-family:-apple-system,BlinkMacSystemFont,'PingFang SC','Microsoft YaHei',sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
-.header{text-align:center;padding:24px 16px 18px;background:linear-gradient(135deg,#4f6ef7,#7c3aed,#a855f7);color:#fff;position:relative}
+.header{text-align:center;padding:24px 16px 18px;background:linear-gradient(135deg,#4f6ef7,#7c3aed,#a855f7);color:#fff}
 .header h1{font-size:22px;margin-bottom:4px}
 .header p{font-size:13px;opacity:.85}
 .app{max-width:680px;margin:0 auto;padding:12px 16px 80px}
 .child-card{background:var(--card);border-radius:14px;padding:18px;margin-bottom:14px;box-shadow:var(--shadow)}
 .child-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
 .child-header h2{font-size:17px;display:flex;align-items:center;gap:8px}
-.child-header h2 .emoji{font-size:22px}
 .child-info{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px}
 .child-info .tag{padding:3px 12px;border-radius:20px;font-size:12px;background:#f1f5f9;color:var(--sub)}
 .child-actions{display:flex;gap:8px;flex-wrap:wrap}
@@ -25,7 +23,6 @@ body{font-family:-apple-system,BlinkMacSystemFont,'PingFang SC','Microsoft YaHei
 .btn-add{background:var(--accent);color:#fff}
 .btn-del{background:#fef2f2;color:var(--red)}
 .btn-edit{background:#f0fdf4;color:#16a34a}
-.subject-section{margin-top:8px}
 .subject-item{background:#f8fafc;border-radius:10px;padding:12px;margin-bottom:8px;border-left:3px solid var(--accent)}
 .subject-item .subj-name{font-weight:700;font-size:15px;margin-bottom:6px;display:flex;align-items:center;gap:6px}
 .subject-item .subj-name .color-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
@@ -62,84 +59,96 @@ body{font-family:-apple-system,BlinkMacSystemFont,'PingFang SC','Microsoft YaHei
 .btn-confirm{background:var(--accent);color:#fff}
 .btn-cancel{background:#f1f5f9;color:var(--sub)}
 .global-add{position:fixed;bottom:24px;right:24px;width:56px;height:56px;background:linear-gradient(135deg,var(--accent),#7c3aed);color:#fff;border:none;border-radius:50%;font-size:28px;cursor:pointer;box-shadow:0 4px 20px rgba(79,110,247,.4);z-index:50;-webkit-tap-highlight-color:transparent;touch-action:manipulation;line-height:56px}
-.share-bar{display:flex;justify-content:center;gap:10px;margin-top:16px;flex-wrap:wrap}
-.btn-screenshot{padding:10px 20px;background:linear-gradient(135deg,#7c3aed,#a855f7);color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;box-shadow:0 4px 12px rgba(168,85,247,.3);-webkit-tap-highlight-color:transparent;touch-action:manipulation}
-.btn-share{padding:10px 20px;background:linear-gradient(135deg,#f59e0b,#f97316);color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;box-shadow:0 4px 12px rgba(249,115,22,.3);-webkit-tap-highlight-color:transparent;touch-action:manipulation}
-.ss-hint{text-align:center;padding:8px;font-size:12px;color:#7c3aed;display:none}
-.share-url-box{display:none;background:#f1f5f9;border-radius:10px;padding:12px;margin-top:12px;font-size:12px;word-break:break-all}
-.share-url-box input{width:100%;border:1px solid var(--border);border-radius:6px;padding:8px;font-size:11px;color:var(--text);background:#fff}
-.share-url-box .copy-tip{text-align:center;margin-top:6px;color:var(--accent2);font-weight:600;font-size:13px}
+.action-bar{display:flex;justify-content:center;gap:10px;margin-top:16px;flex-wrap:wrap}
+.btn-screenshot{padding:10px 20px;background:linear-gradient(135deg,#7c3aed,#a855f7);color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;-webkit-tap-highlight-color:transparent;touch-action:manipulation}
+.status-bar{text-align:center;padding:6px;font-size:12px;color:var(--sub);margin-top:8px}
+.status-bar.syncing{color:#f59e0b}
+.status-bar.error{color:var(--red)}
+.status-bar.ok{color:var(--accent2)}
 </style>
 </head>
 <body>
 <div class="header">
 <h1>📚 辅导班上课记录</h1>
-<p>轻松记录 · 家人共享 · 一目了然</p>
+<p>轻松记录 · 家人同步 · 一目了然</p>
 </div>
-<div class="app" id="app"></div>
+<div class="app" id="app">
+<div class="empty-msg"><span class="big-emoji">⏳</span>正在加载数据...</div>
+</div>
 <button class="global-add" id="btnGlobalAdd">＋</button>
 <div class="modal-overlay" id="modalOverlay">
 <div class="modal" id="modalContent"></div>
 </div>
 <script>
 var COLORS=['#4f6ef7','#22c55e','#f59e0b','#ef4444','#ec4899','#8b5cf6','#06b6d4','#f97316','#14b8a6','#6366f1'];
-var STORAGE_KEY='tutor_tracker_data';
-var _currentData=null;
+var REPO='xiaozhuang2026/tutor-tracker';
+var DATA_FILE='data.json';
+var API='https://api.github.com/repos/'+REPO+'/contents/'+DATA_FILE;
+var TOKEN='ghp_Vm...mAxP';
 
-function encodeData(data){
-try{
-var json=JSON.stringify(data);
-var compressed=pako.deflate(json);
-var binary=String.fromCharCode.apply(null,compressed);
-var b64=btoa(binary);
-return b64.replace(/\+/g,'-').replace(/\//g,'_').replace(/=/g,'');
-}catch(e){return '';}
-}
+var _data=null;
+var _sha=null;
+var _saving=false;
 
-function decodeData(str){
-try{
-var b64=str.replace(/-/g,'+').replace(/_/g,'/');
-while(b64.length%4) b64+='=';
-var binary=atob(b64);
-var bytes=new Uint8Array(binary.length);
-for(var i=0;i<binary.length;i++) bytes[i]=binary.charCodeAt(i);
-var json=pako.inflate(bytes,{to:'string'});
-return JSON.parse(json);
-}catch(e){return null;}
-}
+function getData(){return _data||{children:[]};}
 
-function getShareURL(data){
-var encoded=encodeData(data);
-if(!encoded) return '';
-return location.href.split('#')[0].split('?')[0]+'#'+encoded;
+function status(msg,cls){
+var bar=document.getElementById('statusBar');
+if(!bar) return;
+bar.textContent=msg;
+bar.className='status-bar '+(cls||'');
 }
 
 function loadData(){
-if(_currentData) return _currentData;
-var data=null;
-var hash=location.hash.slice(1);
-if(hash.length>10){
-data=decodeData(hash);
-if(data&&data.children){
-_currentData=data;
-localStorage.setItem(STORAGE_KEY,JSON.stringify(data));
-return data;
-}
-}
-try{data=JSON.parse(localStorage.getItem(STORAGE_KEY));}catch(e){}
-if(!data||!data.children) data={children:[]};
-_currentData=data;
-return data;
+status('正在加载数据...','syncing');
+fetch(API+(TOKEN?'?token='+TOKEN:''),{headers:TOKEN?{Authorization:'token '+TOKEN}:{}})
+.then(function(r){return r.json();})
+.then(function(json){
+_sha=json.sha;
+try{_data=JSON.parse(atob(json.content));}catch(e){_data={children:[]};}
+status('✅ 数据已加载 · '+(new Date()).toLocaleTimeString(),'ok');
+render();
+})
+.catch(function(e){
+status('❌ 加载失败，使用本地缓存','error');
+try{_data=JSON.parse(localStorage.getItem('tutor_local'));}catch(e2){_data={children:[]};}
+render();
+});
 }
 
 function saveData(data){
-_currentData=data;
-localStorage.setItem(STORAGE_KEY,JSON.stringify(data));
-history.replaceState(null,'','#'+encodeData(data));
+if(_saving) return;
+_saving=true;
+data=data||_data;
+_data=data;
+localStorage.setItem('tutor_local',JSON.stringify(data));
+status('正在保存...','syncing');
+
+var body=JSON.stringify({
+message:'update '+new Date().toISOString().slice(0,19),
+content:btoa(unescape(encodeURIComponent(JSON.stringify(data)))),
+sha:_sha
+});
+
+fetch(API+(TOKEN?'?token='+TOKEN:''),{
+method:'PUT',
+headers:Object.assign({'Content-Type':'application/json'},TOKEN?{Authorization:'token '+TOKEN}:{}),
+body:body
+})
+.then(function(r){return r.json();})
+.then(function(json){
+if(json.content) _sha=json.content.sha||json.commit.sha;
+status('✅ 已同步 · '+(new Date()).toLocaleTimeString(),'ok');
+_saving=false;
+})
+.catch(function(e){
+status('❌ 同步失败，数据已保存在本地','error');
+_saving=false;
+});
 }
 
 function render(){
-var data=loadData();
+var data=getData();
 var app=document.getElementById('app');
 var html='';
 
@@ -150,7 +159,7 @@ html+='<div class="empty-msg"><span class="big-emoji">📖</span>还没有记录
 for(var ci=0;ci<data.children.length;ci++){
 var child=data.children[ci];
 html+='<div class="child-card">';
-html+='<div class="child-header"><h2><span class="emoji">👧</span>'+esc(child.name)+'</h2>';
+html+='<div class="child-header"><h2>👧 '+esc(child.name)+'</h2>';
 html+='<div class="child-actions">';
 html+='<button class="btn-sm btn-add" data-action="addSubject" data-child="'+ci+'">＋ 添加课程</button>';
 html+='<button class="btn-sm btn-edit" data-action="editChild" data-child="'+ci+'">✏️</button>';
@@ -166,7 +175,6 @@ html+='</div>';
 }
 
 if(child.subjects&&child.subjects.length>0){
-html+='<div class="subject-section">';
 for(var si=0;si<child.subjects.length;si++){
 var subj=child.subjects[si];
 var dates=subj.dates||[];
@@ -185,14 +193,12 @@ html+='<button class="btn-add-date" data-action="addDate" data-child="'+ci+'" da
 html+='</div>';
 html+='</div>';
 }
-html+='</div>';
 } else {
 html+='<p style="font-size:13px;color:var(--sub);text-align:center;padding:12px">暂无课程，点击上方"添加课程"</p>';
 }
 html+='</div>';
 }
 
-// Summary
 var totalAll=0;
 html+='<div class="summary-card">';
 html+='<h3>📊 汇总一览表</h3>';
@@ -203,8 +209,7 @@ var childTotal=0;
 for(var si=0;si<(child.subjects||[]).length;si++){
 var subj=child.subjects[si];
 var cnt=(subj.dates||[]).length;
-childTotal+=cnt;
-totalAll+=cnt;
+childTotal+=cnt;totalAll+=cnt;
 html+='<tr><td>'+esc(child.name)+'</td><td><span style="color:'+subj.color+'">●</span> '+esc(subj.name)+'</td><td><strong>'+cnt+'</strong> 次</td></tr>';
 }
 if(child.subjects&&child.subjects.length>1){
@@ -214,18 +219,12 @@ html+='<tr class="total-row"><td colspan="2">'+esc(child.name)+' 小计</td><td>
 html+='<tr class="total-row"><td colspan="2">📋 全部总计</td><td>'+totalAll+' 次</td></tr>';
 html+='</tbody></table></div>';
 
-html+='<div class="share-bar">';
-html+='<button class="btn-share" id="btnShare">🔗 分享给家人</button>';
+html+='<div class="action-bar">';
 html+='<button class="btn-screenshot" id="btnScreenshot">📸 保存长截图</button>';
-html+='</div>';
-html+='<div class="ss-hint" id="ssHint">⏳ 正在生成截图...</div>';
-html+='<div class="share-url-box" id="shareBox">';
-html+='<p style="margin-bottom:6px;font-weight:600">👇 复制以下链接发给家人：</p>';
-html+='<input id="shareInput" readonly onclick="this.select()">';
-html+='<div class="copy-tip" id="copyTip"></div>';
 html+='</div>';
 }
 
+html+='<div class="status-bar" id="statusBar"></div>';
 app.innerHTML=html;
 bindEvents();
 }
@@ -235,7 +234,6 @@ var app=document.getElementById('app');
 app.addEventListener('click',function(e){
 var el=e.target.closest('[data-action]');
 if(!el){
-if(e.target&&e.target.id==='btnShare') return showShareLink();
 if(e.target&&e.target.id==='btnScreenshot') return captureScreenshot();
 return;
 }
@@ -244,7 +242,7 @@ var ci=parseInt(el.getAttribute('data-child'));
 
 if(action==='delChild'){
 if(confirm('确定删除该孩子的所有记录吗？')){
-var data=loadData();
+var data=getData();
 data.children.splice(ci,1);
 saveData(data);
 render();
@@ -257,7 +255,7 @@ showSubjectModal(ci);
 var si=parseInt(el.getAttribute('data-subj'));
 var dateInput=document.getElementById('dateInput_'+ci+'_'+si);
 if(dateInput&&dateInput.value){
-var data=loadData();
+var data=getData();
 if(!data.children[ci].subjects[si].dates) data.children[ci].subjects[si].dates=[];
 var dates=data.children[ci].subjects[si].dates;
 if(dates.indexOf(dateInput.value)===-1){
@@ -272,7 +270,7 @@ alert('该日期已记录过了');
 } else if(action==='removeDate'){
 var si=parseInt(el.getAttribute('data-subj'));
 var date=el.getAttribute('data-date');
-var data=loadData();
+var data=getData();
 var dates=data.children[ci].subjects[si].dates;
 var idx=dates.indexOf(date);
 if(idx>-1){dates.splice(idx,1);saveData(data);render();}
@@ -280,26 +278,8 @@ if(idx>-1){dates.splice(idx,1);saveData(data);render();}
 });
 }
 
-function showShareLink(){
-var box=document.getElementById('shareBox');
-var input=document.getElementById('shareInput');
-var data=loadData();
-var url=getShareURL(data);
-input.value=url;
-box.style.display='block';
-input.select();
-if(navigator.clipboard){
-navigator.clipboard.writeText(url).then(function(){
-document.getElementById('copyTip').textContent='✅ 链接已复制到剪贴板！';
-});
-} else {
-document.getElementById('copyTip').textContent='👆 请手动长按复制链接';
-}
-setTimeout(function(){document.getElementById('copyTip').textContent='';},5000);
-}
-
 function showChildModal(editIdx){
-var data=loadData();
+var data=getData();
 var child=editIdx!==undefined?data.children[editIdx]:null;
 var html='<h3>'+(child?'✏️ 编辑孩子信息':'➕ 添加孩子')+'</h3>';
 html+='<div class="form-group"><label>姓名</label><input id="fName" placeholder="例如：小明" value="'+(child?esc(child.name):'')+'"></div>';
@@ -313,7 +293,7 @@ document.getElementById('modalOverlay').classList.add('show');
 document.getElementById('btnSaveChild').addEventListener('click',function(){
 var name=document.getElementById('fName').value.trim();
 if(!name){alert('请输入姓名');return;}
-var data=loadData();
+var data=getData();
 var obj={name:name,age:document.getElementById('fAge').value.trim(),grade:document.getElementById('fGrade').value.trim(),school:document.getElementById('fSchool').value.trim(),subjects:[]};
 if(editIdx!==undefined){
 obj.subjects=data.children[editIdx].subjects;
@@ -339,7 +319,6 @@ html+='<div class="modal-btns"><button class="btn-cancel" onclick="closeModal()"
 html+='<button class="btn-confirm" id="btnSaveSubj">添加</button></div>';
 document.getElementById('modalContent').innerHTML=html;
 document.getElementById('modalOverlay').classList.add('show');
-
 var selectedColor=COLORS[0];
 document.getElementById('colorPicker').addEventListener('click',function(e){
 var opt=e.target.closest('.color-opt');
@@ -348,11 +327,10 @@ document.querySelectorAll('.color-opt').forEach(function(o){o.classList.remove('
 opt.classList.add('selected');
 selectedColor=opt.getAttribute('data-color');
 });
-
 document.getElementById('btnSaveSubj').addEventListener('click',function(){
 var name=document.getElementById('fSubjName').value.trim();
 if(!name){alert('请输入课程名称');return;}
-var data=loadData();
+var data=getData();
 data.children[childIdx].subjects.push({name:name,color:selectedColor,dates:[]});
 saveData(data);
 closeModal();
@@ -381,23 +359,16 @@ return d.innerHTML;
 }
 
 function captureScreenshot(){
-var hint=document.getElementById('ssHint');
+var hint=document.getElementById('statusBar');
 var btnSS=document.getElementById('btnScreenshot');
-var shareBtn=document.getElementById('btnShare');
 var appEl=document.getElementById('app');
-if(!btnSS||!hint) return;
+if(!btnSS) return;
 btnSS.style.display='none';
-shareBtn.style.display='none';
-hint.style.display='block';
-html2canvas(appEl,{
-scale:4,
-useCORS:true,
-backgroundColor:'#f0f4ff',
-logging:false
-}).then(function(canvas){
+status('⏳ 正在生成截图...','syncing');
+html2canvas(appEl,{scale:4,useCORS:true,backgroundColor:'#f0f4ff',logging:false})
+.then(function(canvas){
 btnSS.style.display='inline-block';
-shareBtn.style.display='inline-block';
-hint.style.display='none';
+status('✅ 截图已保存','ok');
 var link=document.createElement('a');
 link.download='辅导班上课记录.png';
 link.href=canvas.toDataURL('image/png',1.0);
@@ -406,14 +377,11 @@ link.click();
 document.body.removeChild(link);
 }).catch(function(){
 btnSS.style.display='inline-block';
-shareBtn.style.display='inline-block';
-hint.textContent='❌ 截图失败';
-hint.style.display='block';
-setTimeout(function(){hint.style.display='none';},3000);
+status('❌ 截图失败','error');
 });
 }
 
-render();
+loadData();
 </script>
 </body>
 </html>
