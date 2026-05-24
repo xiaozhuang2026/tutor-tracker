@@ -81,13 +81,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,'PingFang SC','Microsoft YaHei
 </div>
 <script>
 var COLORS=['#4f6ef7','#22c55e','#f59e0b','#ef4444','#ec4899','#8b5cf6','#06b6d4','#f97316','#14b8a6','#6366f1'];
-var REPO='xiaozhuang2026/tutor-tracker';
-var DATA_FILE='data.json';
-var API='https://api.github.com/repos/'+REPO+'/contents/'+DATA_FILE;
-var TOKEN='ghp_Vm...mAxP';
-
+var STORAGE_KEY='tutor_tracker_data';
 var _data=null;
-var _sha=null;
 var _saving=false;
 
 function getData(){return _data||{children:[]};}
@@ -101,19 +96,25 @@ bar.className='status-bar '+(cls||'');
 
 function loadData(){
 status('正在加载数据...','syncing');
-fetch(API+(TOKEN?'?token='+TOKEN:''),{headers:TOKEN?{Authorization:'token '+TOKEN}:{}})
-.then(function(r){return r.json();})
-.then(function(json){
-_sha=json.sha;
-try{_data=JSON.parse(atob(json.content));}catch(e){_data={children:[]};}
-status('✅ 数据已加载 · '+(new Date()).toLocaleTimeString(),'ok');
+var dataUrl=localStorage.getItem('tutor_data_url');
+if(dataUrl){
+fetch(dataUrl).then(function(r){return r.json();}).then(function(d){
+_data=d;
+status('✅ 数据已加载','ok');
 render();
-})
-.catch(function(e){
-status('❌ 加载失败，使用本地缓存','error');
-try{_data=JSON.parse(localStorage.getItem('tutor_local'));}catch(e2){_data={children:[]};}
-render();
+}).catch(function(){
+loadLocal();
 });
+} else {
+loadLocal();
+}
+}
+
+function loadLocal(){
+try{_data=JSON.parse(localStorage.getItem(STORAGE_KEY));}catch(e){_data=null;}
+if(!_data||!_data.children) _data={children:[]};
+status('','ok');
+render();
 }
 
 function saveData(data){
@@ -121,30 +122,39 @@ if(_saving) return;
 _saving=true;
 data=data||_data;
 _data=data;
-localStorage.setItem('tutor_local',JSON.stringify(data));
-status('正在保存...','syncing');
+localStorage.setItem(STORAGE_KEY,JSON.stringify(data));
 
-var body=JSON.stringify({
-message:'update '+new Date().toISOString().slice(0,19),
-content:btoa(unescape(encodeURIComponent(JSON.stringify(data)))),
-sha:_sha
-});
-
-fetch(API+(TOKEN?'?token='+TOKEN:''),{
-method:'PUT',
-headers:Object.assign({'Content-Type':'application/json'},TOKEN?{Authorization:'token '+TOKEN}:{}),
-body:body
+var dataUrl=localStorage.getItem('tutor_data_url');
+if(!dataUrl){
+// First save - create remote data
+fetch('https://jsonblob.com/api/jsonBlob',{method:'POST',headers:{'Content-Type':'application/json','Accept':'application/json'},body:JSON.stringify(data)})
+.then(function(r){
+dataUrl=r.headers.get('Location')||r.headers.get('location');
+if(dataUrl){
+localStorage.setItem('tutor_data_url',dataUrl);
+status('✅ 已同步','ok');
+} else {
+status('⚠️ 同步链接获取失败，仅保存在本地','error');
+}
+_saving=false;
 })
-.then(function(r){return r.json();})
-.then(function(json){
-if(json.content) _sha=json.content.sha||json.commit.sha;
+.catch(function(){
+status('⚠️ 网络同步失败，数据已保存在本地','error');
+_saving=false;
+});
+} else {
+status('正在保存...','syncing');
+fetch(dataUrl,{method:'PUT',headers:{'Content-Type':'application/json','Accept':'application/json'},body:JSON.stringify(data)})
+.then(function(){
 status('✅ 已同步 · '+(new Date()).toLocaleTimeString(),'ok');
 _saving=false;
 })
-.catch(function(e){
-status('❌ 同步失败，数据已保存在本地','error');
+.catch(function(){
+status('⚠️ 同步失败，数据已保存在本地','error');
 _saving=false;
 });
+}
+render();
 }
 
 function render(){
@@ -245,7 +255,6 @@ if(confirm('确定删除该孩子的所有记录吗？')){
 var data=getData();
 data.children.splice(ci,1);
 saveData(data);
-render();
 }
 } else if(action==='editChild'){
 showChildModal(ci);
@@ -262,7 +271,6 @@ if(dates.indexOf(dateInput.value)===-1){
 dates.push(dateInput.value);
 dates.sort().reverse();
 saveData(data);
-render();
 } else {
 alert('该日期已记录过了');
 }
@@ -273,7 +281,7 @@ var date=el.getAttribute('data-date');
 var data=getData();
 var dates=data.children[ci].subjects[si].dates;
 var idx=dates.indexOf(date);
-if(idx>-1){dates.splice(idx,1);saveData(data);render();}
+if(idx>-1){dates.splice(idx,1);saveData(data);}
 }
 });
 }
@@ -303,7 +311,6 @@ data.children.push(obj);
 }
 saveData(data);
 closeModal();
-render();
 });
 }
 
@@ -334,7 +341,6 @@ var data=getData();
 data.children[childIdx].subjects.push({name:name,color:selectedColor,dates:[]});
 saveData(data);
 closeModal();
-render();
 });
 }
 
