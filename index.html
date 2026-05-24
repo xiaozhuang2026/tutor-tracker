@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>📚 辅导班上课记录</title>
+<script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#f0f4ff;--card:#fff;--accent:#4f6ef7;--accent2:#22c55e;--accent3:#f59e0b;--red:#ef4444;--text:#1e293b;--sub:#64748b;--border:#e2e8f0;--shadow:0 2px 12px rgba(0,0,0,.06)}
+body{font-family:-apple-system,BlinkMacSystemFont,'PingFang SC','Microsoft YaHei',sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+.header{text-align:center;padding:24px 16px 18px;background:linear-gradient(135deg,#4f6ef7,#7c3aed,#a855f7);color:#fff;position:relative}
+.header h1{font-size:22px;margin-bottom:4px}
+.header p{font-size:13px;opacity:.85}
+.app{max-width:680px;margin:0 auto;padding:12px 16px 80px}
+.child-card{background:var(--card);border-radius:14px;padding:18px;margin-bottom:14px;box-shadow:var(--shadow)}
+.child-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+.child-header h2{font-size:17px;display:flex;align-items:center;gap:8px}
+.child-header h2 .emoji{font-size:22px}
+.child-info{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px}
+.child-info .tag{padding:3px 12px;border-radius:20px;font-size:12px;background:#f1f5f9;color:var(--sub)}
+.child-actions{display:flex;gap:8px}
+.btn-sm{padding:5px 14px;border:none;border-radius:8px;font-size:12px;cursor:pointer;font-weight:600;-webkit-tap-highlight-color:transparent;touch-action:manipulation}
+.btn-add{background:var(--accent);color:#fff}
+.btn-del{background:#fef2f2;color:var(--red)}
+.btn-edit{background:#f0fdf4;color:#16a34a}
+.subject-section{margin-top:8px}
+.subject-item{background:#f8fafc;border-radius:10px;padding:12px;margin-bottom:8px;border-left:3px solid var(--accent)}
+.subject-item .subj-name{font-weight:700;font-size:15px;margin-bottom:6px;display:flex;align-items:center;gap:6px}
+.subject-item .subj-name .color-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+.subject-item .subj-count{font-size:12px;color:var(--sub);margin-bottom:6px}
+.date-list{display:flex;flex-wrap:wrap;gap:6px}
+.date-tag{padding:3px 10px;border-radius:6px;font-size:11px;background:#eef2ff;color:var(--accent);font-weight:500;position:relative}
+.date-tag .remove-date{display:none;position:absolute;top:-6px;right:-6px;width:16px;height:16px;background:var(--red);color:#fff;border-radius:50%;font-size:10px;line-height:16px;text-align:center;cursor:pointer}
+.date-tag:hover .remove-date,.date-tag:active .remove-date{display:block}
+.add-date-row{display:flex;gap:6px;margin-top:8px;align-items:center}
+.add-date-row input[type=date]{padding:4px 8px;border:1px solid var(--border);border-radius:6px;font-size:12px}
+.btn-add-date{padding:4px 12px;background:var(--accent);color:#fff;border:none;border-radius:6px;font-size:12px;cursor:pointer;-webkit-tap-highlight-color:transparent;touch-action:manipulation}
+.summary-card{background:var(--card);border-radius:14px;padding:18px;margin-top:14px;box-shadow:var(--shadow)}
+.summary-card h3{font-size:16px;margin-bottom:12px;display:flex;align-items:center;gap:6px}
+.summary-table{width:100%;border-collapse:collapse;font-size:13px}
+.summary-table th{background:#f1f5f9;padding:8px 10px;text-align:left;font-weight:600;border-bottom:2px solid var(--border)}
+.summary-table td{padding:8px 10px;border-bottom:1px solid var(--border)}
+.summary-table tr:last-child td{border-bottom:none}
+.summary-table .total-row{font-weight:700;background:#faf5ff}
+.summary-table .total-row td{color:var(--accent)}
+.empty-msg{text-align:center;padding:40px 20px;color:var(--sub);font-size:14px}
+.empty-msg .big-emoji{font-size:48px;margin-bottom:12px;display:block}
+.modal-overlay{display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.4);z-index:100;justify-content:center;align-items:center;padding:20px}
+.modal-overlay.show{display:flex}
+.modal{background:#fff;border-radius:16px;padding:24px;width:100%;max-width:400px;max-height:80vh;overflow-y:auto}
+.modal h3{font-size:17px;margin-bottom:16px;text-align:center}
+.form-group{margin-bottom:14px}
+.form-group label{display:block;font-size:13px;font-weight:600;margin-bottom:4px;color:var(--sub)}
+.form-group input,.form-group select{width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:8px;font-size:14px;outline:none;transition:border .2s}
+.form-group input:focus{border-color:var(--accent)}
+.color-picker{display:flex;gap:8px;flex-wrap:wrap}
+.color-opt{width:28px;height:28px;border-radius:50%;cursor:pointer;border:3px solid transparent;transition:border .2s}
+.color-opt.selected{border-color:#333}
+.modal-btns{display:flex;gap:10px;margin-top:18px}
+.modal-btns button{flex:1;padding:10px;border:none;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;-webkit-tap-highlight-color:transparent;touch-action:manipulation}
+.btn-confirm{background:var(--accent);color:#fff}
+.btn-cancel{background:#f1f5f9;color:var(--sub)}
+.global-add{position:fixed;bottom:24px;right:24px;width:56px;height:56px;background:linear-gradient(135deg,var(--accent),#7c3aed);color:#fff;border:none;border-radius:50%;font-size:28px;cursor:pointer;box-shadow:0 4px 20px rgba(79,110,247,.4);z-index:50;-webkit-tap-highlight-color:transparent;touch-action:manipulation;line-height:56px}
+.screenshot-bar{display:flex;justify-content:center;gap:10px;margin-top:16px}
+.btn-screenshot{padding:10px 24px;background:linear-gradient(135deg,#7c3aed,#a855f7);color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;box-shadow:0 4px 12px rgba(168,85,247,.3);-webkit-tap-highlight-color:transparent;touch-action:manipulation}
+.ss-hint{text-align:center;padding:8px;font-size:12px;color:#7c3aed;display:none}
+@media print{
+.header,.global-add,.child-actions,.add-date-row,.btn-sm,.screenshot-bar,.ss-hint{display:none!important}
+body{background:#fff}
+.app{padding:0}
+.child-card,.summary-card{box-shadow:none;border:1px solid #ddd}
+}
+</style>
+</head>
+<body>
+<div class="header">
+<h1>📚 辅导班上课记录</h1>
+<p>轻松记录 · 一目了然 · 保存长截图</p>
+</div>
+<div class="app" id="app"></div>
+<button class="global-add" id="btnGlobalAdd">＋</button>
+<div class="modal-overlay" id="modalOverlay">
+<div class="modal" id="modalContent"></div>
+</div>
+<script>
+var COLORS=['#4f6ef7','#22c55e','#f59e0b','#ef4444','#ec4899','#8b5cf6','#06b6d4','#f97316','#14b8a6','#6366f1'];
+var STORAGE_KEY='tutor_tracker_data';
+
+function loadData(){
+try{return JSON.parse(localStorage.getItem(STORAGE_KEY))||{children:[]};}catch(e){return{children:[]};}
+}
+function saveData(data){
+localStorage.setItem(STORAGE_KEY,JSON.stringify(data));
+}
+
+function render(){
+var data=loadData();
+var app=document.getElementById('app');
+var html='';
+
+if(data.children.length===0){
+html+='<div class="empty-msg"><span class="big-emoji">📖</span>还没有记录<br>点击右下角 ＋ 添加孩子信息</div>';
+} else {
+for(var ci=0;ci<data.children.length;ci++){
+var child=data.children[ci];
+html+='<div class="child-card">';
+html+='<div class="child-header"><h2><span class="emoji">👧</span>'+esc(child.name)+'</h2>';
+html+='<div class="child-actions">';
+html+='<button class="btn-sm btn-add" data-action="addSubject" data-child="'+ci+'">＋ 添加课程</button>';
+html+='<button class="btn-sm btn-edit" data-action="editChild" data-child="'+ci+'">✏️</button>';
+html+='<button class="btn-sm btn-del" data-action="delChild" data-child="'+ci+'">🗑️</button>';
+html+='</div></div>';
+
+if(child.age||child.grade||child.school){
+html+='<div class="child-info">';
+if(child.age) html+='<span class="tag">🎂 '+esc(child.age)+'岁</span>';
+if(child.grade) html+='<span class="tag">🎓 '+esc(child.grade)+'</span>';
+if(child.school) html+='<span class="tag">🏫 '+esc(child.school)+'</span>';
+html+='</div>';
+}
+
+if(child.subjects&&child.subjects.length>0){
+html+='<div class="subject-section">';
+for(var si=0;si<child.subjects.length;si++){
+var subj=child.subjects[si];
+var dates=subj.dates||[];
+html+='<div class="subject-item" style="border-left-color:'+subj.color+'">';
+html+='<div class="subj-name"><span class="color-dot" style="background:'+subj.color+'"></span>'+esc(subj.name);
+if(dates.length>0) html+='<span style="font-size:12px;color:var(--sub);font-weight:400;margin-left:8px">'+dates.length+'次</span>';
+html+='</div>';
+html+='<div class="date-list">';
+for(var di=0;di<dates.length;di++){
+html+='<span class="date-tag">'+dates[di]+'<span class="remove-date" data-action="removeDate" data-child="'+ci+'" data-subj="'+si+'" data-date="'+dates[di]+'">×</span></span>';
+}
+html+='</div>';
+html+='<div class="add-date-row">';
+html+='<input type="date" id="dateInput_'+ci+'_'+si+'" value="'+todayStr()+'">';
+html+='<button class="btn-add-date" data-action="addDate" data-child="'+ci+'" data-subj="'+si+'">记录上课</button>';
+html+='</div>';
+html+='</div>';
+}
+html+='</div>';
+} else {
+html+='<p style="font-size:13px;color:var(--sub);text-align:center;padding:12px">暂无课程，点击上方"添加课程"</p>';
+}
+html+='</div>';
+}
+
+// Summary table
+var totalAll=0;
+html+='<div class="summary-card">';
+html+='<h3>📊 汇总一览表</h3>';
+html+='<table class="summary-table"><thead><tr><th>孩子</th><th>课程</th><th>上课次数</th></tr></thead><tbody>';
+for(var ci=0;ci<data.children.length;ci++){
+var child=data.children[ci];
+var childTotal=0;
+for(var si=0;si<(child.subjects||[]).length;si++){
+var subj=child.subjects[si];
+var cnt=(subj.dates||[]).length;
+childTotal+=cnt;
+totalAll+=cnt;
+html+='<tr><td>'+esc(child.name)+'</td><td><span style="color:'+subj.color+'">●</span> '+esc(subj.name)+'</td><td><strong>'+cnt+'</strong> 次</td></tr>';
+}
+if(child.subjects&&child.subjects.length>1){
+html+='<tr class="total-row"><td colspan="2">'+esc(child.name)+' 小计</td><td>'+childTotal+' 次</td></tr>';
+}
+}
+html+='<tr class="total-row"><td colspan="2">📋 全部总计</td><td>'+totalAll+' 次</td></tr>';
+html+='</tbody></table></div>';
+
+html+='<div class="screenshot-bar">';
+html+='<button class="btn-screenshot" id="btnScreenshot">📸 保存长截图</button>';
+html+='</div>';
+html+='<div class="ss-hint" id="ssHint">⏳ 正在生成截图...</div>';
+}
+
+app.innerHTML=html;
+bindEvents();
+}
+
+function bindEvents(){
+var app=document.getElementById('app');
+app.addEventListener('click',function(e){
+var el=e.target.closest('[data-action]');
+if(!el) return;
+var action=el.getAttribute('data-action');
+var ci=parseInt(el.getAttribute('data-child'));
+
+if(action==='delChild'){
+if(confirm('确定删除该孩子的所有记录吗？')){
+var data=loadData();
+data.children.splice(ci,1);
+saveData(data);
+render();
+}
+} else if(action==='editChild'){
+showChildModal(ci);
+} else if(action==='addSubject'){
+showSubjectModal(ci);
+} else if(action==='addDate'){
+var si=parseInt(el.getAttribute('data-subj'));
+var dateInput=document.getElementById('dateInput_'+ci+'_'+si);
+if(dateInput&&dateInput.value){
+var data=loadData();
+if(!data.children[ci].subjects[si].dates) data.children[ci].subjects[si].dates=[];
+var dates=data.children[ci].subjects[si].dates;
+if(dates.indexOf(dateInput.value)===-1){
+dates.push(dateInput.value);
+dates.sort().reverse();
+saveData(data);
+render();
+} else {
+alert('该日期已记录过了');
+}
+}
+} else if(action==='removeDate'){
+var si=parseInt(el.getAttribute('data-subj'));
+var date=el.getAttribute('data-date');
+var data=loadData();
+var dates=data.children[ci].subjects[si].dates;
+var idx=dates.indexOf(date);
+if(idx>-1){dates.splice(idx,1);saveData(data);render();}
+}
+});
+}
+
+function showChildModal(editIdx){
+var data=loadData();
+var child=editIdx!==undefined?data.children[editIdx]:null;
+var html='<h3>'+(child?'✏️ 编辑孩子信息':'➕ 添加孩子')+'</h3>';
+html+='<div class="form-group"><label>姓名</label><input id="fName" placeholder="例如：小明" value="'+(child?esc(child.name):'')+'"></div>';
+html+='<div class="form-group"><label>年龄</label><input id="fAge" type="number" placeholder="例如：8" value="'+(child?child.age||'':'')+'"></div>';
+html+='<div class="form-group"><label>年级</label><input id="fGrade" placeholder="例如：二年级" value="'+(child?child.grade||'':'')+'"></div>';
+html+='<div class="form-group"><label>学校</label><input id="fSchool" placeholder="例如：实验小学" value="'+(child?child.school||'':'')+'"></div>';
+html+='<div class="modal-btns"><button class="btn-cancel" onclick="closeModal()">取消</button>';
+html+='<button class="btn-confirm" id="btnSaveChild">保存</button></div>';
+document.getElementById('modalContent').innerHTML=html;
+document.getElementById('modalOverlay').classList.add('show');
+document.getElementById('btnSaveChild').addEventListener('click',function(){
+var name=document.getElementById('fName').value.trim();
+if(!name){alert('请输入姓名');return;}
+var data=loadData();
+var obj={name:name,age:document.getElementById('fAge').value.trim(),grade:document.getElementById('fGrade').value.trim(),school:document.getElementById('fSchool').value.trim(),subjects:[]};
+if(editIdx!==undefined){
+obj.subjects=data.children[editIdx].subjects;
+data.children[editIdx]=obj;
+} else {
+data.children.push(obj);
+}
+saveData(data);
+closeModal();
+render();
+});
+}
+
+function showSubjectModal(childIdx){
+var data=loadData();
+var html='<h3>➕ 添加辅导课程</h3>';
+html+='<div class="form-group"><label>课程名称</label><input id="fSubjName" placeholder="例如：数学、钢琴、英语…"></div>';
+html+='<div class="form-group"><label>选择颜色</label><div class="color-picker" id="colorPicker">';
+for(var i=0;i<COLORS.length;i++){
+html+='<div class="color-opt'+(i===0?' selected':'')+'" data-color="'+COLORS[i]+'" style="background:'+COLORS[i]+'"></div>';
+}
+html+='</div></div>';
+html+='<div class="modal-btns"><button class="btn-cancel" onclick="closeModal()">取消</button>';
+html+='<button class="btn-confirm" id="btnSaveSubj">添加</button></div>';
+document.getElementById('modalContent').innerHTML=html;
+document.getElementById('modalOverlay').classList.add('show');
+
+var selectedColor=COLORS[0];
+document.getElementById('colorPicker').addEventListener('click',function(e){
+var opt=e.target.closest('.color-opt');
+if(!opt) return;
+document.querySelectorAll('.color-opt').forEach(function(o){o.classList.remove('selected');});
+opt.classList.add('selected');
+selectedColor=opt.getAttribute('data-color');
+});
+
+document.getElementById('btnSaveSubj').addEventListener('click',function(){
+var name=document.getElementById('fSubjName').value.trim();
+if(!name){alert('请输入课程名称');return;}
+var data=loadData();
+data.children[childIdx].subjects.push({name:name,color:selectedColor,dates:[]});
+saveData(data);
+closeModal();
+render();
+});
+}
+
+function closeModal(){
+document.getElementById('modalOverlay').classList.remove('show');
+}
+
+document.getElementById('btnGlobalAdd').addEventListener('click',function(){showChildModal();});
+document.getElementById('modalOverlay').addEventListener('click',function(e){
+if(e.target===e.currentTarget) closeModal();
+});
+
+function todayStr(){
+var d=new new Date();
+return d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2)+'-'+('0'+d.getDate()).slice(-2);
+}
+
+function esc(s){
+var d=document.createElement('div');
+d.textContent=s;
+return d.innerHTML;
+}
+
+function captureScreenshot(){
+var hint=document.getElementById('ssHint');
+var btnSS=document.getElementById('btnScreenshot');
+var appEl=document.getElementById('app');
+if(!btnSS||!hint) return;
+btnSS.style.display='none';
+hint.style.display='block';
+html2canvas(appEl,{
+scale:4,
+useCORS:true,
+backgroundColor:getComputedStyle(document.body).backgroundColor||'#f0f4ff',
+logging:false
+}).then(function(canvas){
+btnSS.style.display='inline-block';
+hint.style.display='none';
+var link=document.createElement('a');
+link.download='辅导班上课记录.png';
+link.href=canvas.toDataURL('image/png',1.0);
+document.body.appendChild(link);
+link.click();
+document.body.removeChild(link);
+}).catch(function(){
+btnSS.style.display='inline-block';
+hint.textContent='❌ 截图失败';
+hint.style.display='block';
+setTimeout(function(){hint.style.display='none';},3000);
+});
+}
+
+document.getElementById('app').addEventListener('click',function(e){
+if(e.target&&e.target.id==='btnScreenshot'){captureScreenshot();}
+});
+
+render();
+</script>
+</body>
+</html>
